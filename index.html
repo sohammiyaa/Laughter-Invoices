@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Laughter Enterprise — Invoice Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f3ec;
+    --bg-card: #ffffff;
+    --bg-warm: #ede7d8;
+    --ink: #1a1814;
+    --ink-soft: #5a554a;
+    --ink-mute: #8b8576;
+    --line: #d8d2c0;
+    --line-soft: #e8e3d4;
+    --accent: #c4361a;
+    --accent-soft: #f4d8d0;
+    --success: #2d6a3f;
+    --warn: #b8860b;
+    --warn-soft: #f4e8c8;
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Inter', -apple-system, sans-serif;
+    --radius: 4px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body {
+    font-family: var(--body);
+    color: var(--ink);
+    line-height: 1.5;
+    font-size: 15px;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 80% 10%, rgba(196, 54, 26, 0.06), transparent 40%),
+      radial-gradient(circle at 10% 90%, rgba(45, 106, 63, 0.05), transparent 40%),
+      var(--bg);
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 20px 32px;
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(8px);
+    background: rgba(246, 243, 236, 0.95);
+  }
+  .header-inner {
+    max-width: 1280px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand-mark {
+    font-family: var(--display);
+    font-size: 26px; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .brand-mark em { font-style: italic; color: var(--accent); font-weight: 600; }
+  .brand-sub {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--ink-mute);
+    padding-left: 12px; border-left: 1px solid var(--line);
+  }
+  nav { display: flex; gap: 4px; }
+  .nav-btn {
+    background: transparent; border: none;
+    padding: 8px 14px;
+    font-family: var(--body); font-size: 13px; font-weight: 500;
+    color: var(--ink-soft); cursor: pointer;
+    border-radius: var(--radius); transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-btn:hover { background: var(--bg-warm); color: var(--ink); }
+  .nav-btn.active { background: var(--ink); color: var(--bg); }
+  .nav-btn .count { font-size: 11px; opacity: 0.7; }
+  main { max-width: 1280px; margin: 0 auto; padding: 32px 32px 80px; }
+  .page { display: none; }
+  .page.active { display: block; animation: fade 0.3s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .page-title {
+    font-family: var(--display);
+    font-size: 40px; font-weight: 600;
+    letter-spacing: -0.03em; line-height: 1;
+    margin-bottom: 6px;
+  }
+  .page-sub { font-size: 14px; color: var(--ink-mute); margin-bottom: 28px; }
+  .edit-banner {
+    background: var(--warn-soft);
+    border: 1px solid #d4b860;
+    border-radius: var(--radius);
+    padding: 14px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .edit-banner-text { font-size: 13px; color: var(--ink); }
+  .edit-banner-text strong { font-weight: 600; }
+  .edit-banner i { font-size: 18px; color: var(--warn); }
+  .create-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 28px; align-items: start;
+  }
+  @media (max-width: 980px) { .create-grid { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+  }
+  .panel-section { margin-bottom: 24px; }
+  .panel-section:last-child { margin-bottom: 0; }
+  .section-label {
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute); font-weight: 600;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .field label {
+    display: block; font-size: 12px;
+    color: var(--ink-soft); font-weight: 500;
+    margin-bottom: 5px;
+  }
+  .field-hint { font-size: 11px; color: var(--ink-mute); margin-top: 4px; line-height: 1.5; }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--body); font-size: 14px;
+    color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    outline: none; transition: all 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--ink); background: var(--bg-card);
+  }
+  input:read-only, input[readonly] {
+    background: var(--bg-warm); color: var(--ink-soft); cursor: not-allowed;
+  }
+  textarea { resize: vertical; min-height: 60px; font-family: var(--body); }
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a1814' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .seller-card {
+    background: var(--bg-warm);
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    font-size: 12px; line-height: 1.7;
+    border-left: 3px solid var(--accent);
+  }
+  .seller-card strong {
+    font-family: var(--display);
+    font-size: 16px; font-weight: 600;
+    display: block; margin-bottom: 4px;
+  }
+  .seller-card .seller-meta { color: var(--ink-soft); }
+  .totals {
+    background: var(--ink); color: var(--bg);
+    padding: 18px 22px;
+    border-radius: var(--radius);
+    margin-top: 8px;
+  }
+  .totals-row {
+    display: flex; justify-content: space-between;
+    padding: 5px 0; font-size: 13px;
+    color: rgba(246, 243, 236, 0.75);
+  }
+  .totals-row.grand {
+    font-size: 22px; font-family: var(--display); font-weight: 600;
+    color: var(--bg);
+    border-top: 1px solid rgba(246, 243, 236, 0.2);
+    margin-top: 8px; padding-top: 12px;
+  }
+  .totals-row.grand .label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-family: var(--body); font-weight: 500;
+    align-self: center;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 11px 18px;
+    font-family: var(--body);
+    font-size: 13px; font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer; transition: all 0.15s;
+    border: 1px solid transparent;
+    background: transparent; color: var(--ink);
+    white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--ink); color: var(--bg); }
+  .btn-primary:hover:not(:disabled) { background: var(--accent); }
+  .btn-secondary { border-color: var(--line); background: var(--bg-card); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--ink); }
+  .btn-ghost { color: var(--ink-soft); }
+  .btn-ghost:hover { background: var(--bg-warm); color: var(--ink); }
+  .btn-danger { color: var(--accent); border-color: var(--accent-soft); }
+  .btn-danger:hover { background: var(--accent-soft); }
+  .btn-icon {
+    width: 34px; height: 34px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    cursor: pointer; color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-icon.danger:hover { border-color: var(--accent); color: var(--accent); }
+  .actions-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .status {
+    font-size: 13px; margin-top: 10px; min-height: 20px;
+    color: var(--success);
+  }
+  .status.error { color: var(--accent); }
+  .status.warn { color: var(--warn); }
+  .invoice-paper {
+    background: #ffffff; color: #1a1814;
+    padding: 48px 52px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-family: var(--body);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+    position: relative; overflow: hidden;
+    min-height: 600px;
+  }
+  .invoice-paper::before {
+    content: ''; position: absolute;
+    top: 0; right: 0;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle at top right, var(--accent-soft), transparent 70%);
+    opacity: 0.6; pointer-events: none;
+  }
+  .inv-revised-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: var(--warn-soft); color: #6b4e00;
+    font-size: 10px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase; z-index: 2;
+  }
+  .inv-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding-bottom: 24px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .inv-brand {
+    font-family: var(--display);
+    font-size: 28px; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1;
+    margin-bottom: 8px;
+  }
+  .inv-brand em { color: var(--accent); font-style: italic; }
+  .inv-meta-left { font-size: 11px; color: var(--ink-soft); line-height: 1.8; }
+  .inv-title {
+    font-family: var(--display);
+    font-size: 30px; font-weight: 600;
+    letter-spacing: -0.02em; line-height: 1;
+    text-align: right; margin-bottom: 12px;
+  }
+  .inv-meta-right { font-size: 12px; text-align: right; line-height: 1.7; }
+  .inv-billto {
+    margin-bottom: 28px;
+    padding: 16px 18px;
+    background: var(--bg-warm);
+    border-radius: var(--radius);
+  }
+  .inv-billto-label {
+    font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute); font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .inv-billto-name {
+    font-family: var(--display);
+    font-size: 18px; font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .inv-billto-meta { font-size: 12px; color: var(--ink-soft); line-height: 1.6; }
+  .inv-table {
+    width: 100%; border-collapse: collapse;
+    margin-bottom: 20px; font-size: 13px;
+  }
+  .inv-table th {
+    text-align: left; padding: 10px 12px;
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.15em; font-weight: 600;
+    color: var(--ink-mute);
+    border-bottom: 1px solid var(--line);
+  }
+  .inv-table td { padding: 14px 12px; border-bottom: 1px solid var(--line-soft); }
+  .inv-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .inv-summary { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+  .inv-summary table {
+    min-width: 260px; font-size: 13px; font-variant-numeric: tabular-nums;
+  }
+  .inv-summary td { padding: 4px 0; }
+  .inv-summary td:first-child { color: var(--ink-soft); padding-right: 24px; }
+  .inv-summary td.num { text-align: right; }
+  .inv-summary .grand td {
+    font-family: var(--display);
+    font-size: 20px; font-weight: 600;
+    padding-top: 12px;
+    border-top: 1.5px solid var(--ink);
+    color: var(--ink);
+  }
+  .inv-payment {
+    background: var(--bg-warm);
+    border-radius: var(--radius);
+    padding: 16px 20px; margin-bottom: 28px;
+    font-size: 12px; line-height: 1.8;
+  }
+  .inv-payment-title {
+    font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-mute); font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .inv-footer {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    padding-top: 24px; border-top: 1px solid var(--line-soft);
+  }
+  .inv-thanks {
+    font-family: var(--display); font-style: italic;
+    font-size: 14px; color: var(--ink-soft);
+    max-width: 250px;
+  }
+  .inv-signature { text-align: center; min-width: 180px; }
+  .inv-signature img { height: 50px; display: block; margin: 0 auto 4px; }
+  .inv-signature .sig-name { border-top: 1px solid var(--ink); padding-top: 6px; font-size: 11px; }
+  .inv-signature .sig-name strong { display: block; font-size: 12px; font-weight: 600; }
+  .inv-signature .sig-name span { color: var(--ink-mute); font-size: 10px; }
+  .inv-revision-note {
+    margin-top: 16px; padding: 10px 14px;
+    background: #fdf6e3;
+    border-left: 3px solid var(--warn);
+    border-radius: var(--radius);
+    font-size: 11px; color: var(--ink-soft);
+    line-height: 1.6;
+  }
+  .history-controls {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 16px; align-items: center;
+  }
+  .search-box { flex: 1; min-width: 200px; position: relative; }
+  .search-box input { padding-left: 36px; }
+  .search-box i {
+    position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-mute); font-size: 16px;
+  }
+  .history-grid { display: grid; gap: 10px; }
+  .history-item {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    transition: all 0.15s; gap: 12px;
+  }
+  .history-item:hover { border-color: var(--ink); }
+  .history-item.revised { border-left: 3px solid var(--warn); }
+  .h-num {
+    font-family: var(--display);
+    font-size: 17px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .h-client { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .h-meta {
+    font-size: 11px; color: var(--ink-mute);
+    margin-top: 4px;
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .h-meta .badge {
+    display: inline-block; padding: 2px 8px;
+    background: var(--bg-warm); border-radius: 10px;
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.05em; font-weight: 500;
+  }
+  .h-meta .badge.warn { background: var(--warn-soft); color: #6b4e00; }
+  .h-amount {
+    font-family: var(--display);
+    font-size: 19px; font-weight: 600;
+    text-align: right; margin-right: 8px; white-space: nowrap;
+  }
+  .h-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .empty { text-align: center; padding: 80px 20px; color: var(--ink-mute); }
+  .empty i { font-size: 48px; opacity: 0.3; display: block; margin-bottom: 12px; }
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26, 24, 20, 0.6);
+    z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.active { display: flex; animation: fade 0.2s ease; }
+  .modal {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    max-width: 480px; width: 100%;
+    padding: 28px;
+    border: 1px solid var(--line);
+  }
+  .modal-title {
+    font-family: var(--display);
+    font-size: 22px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .modal-body { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.6; }
+  .modal-body strong { color: var(--ink); font-weight: 600; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .pdf-export-wrapper {
+    position: absolute; left: -9999px; top: 0;
+    width: 210mm; background: white;
+  }
+  @media print {
+    @page { size: A4; margin: 0; }
+    html, body { background: white !important; }
+    header, nav, .panel, .actions-row, .page-title, .page-sub, .edit-banner, .create-grid > div:first-child { display: none !important; }
+    main { padding: 0; max-width: none; }
+    .create-grid { display: block; gap: 0; }
+    .invoice-paper {
+      box-shadow: none; border: none;
+      padding: 20mm 18mm;
+      page-break-inside: avoid;
+    }
+  }
+  @media (max-width: 640px) {
+    header { padding: 14px 18px; }
+    .brand-sub { display: none; }
+    main { padding: 20px 18px 60px; }
+    .page-title { font-size: 30px; }
+    .panel { padding: 20px; }
+    .invoice-paper { padding: 24px 20px; }
+    .inv-header { flex-direction: column; gap: 16px; }
+    .inv-title, .inv-meta-right { text-align: left; }
+    .field-row { grid-template-columns: 1fr; }
+    nav .nav-btn span:not(.count) { display: none; }
+    .h-amount { font-size: 16px; }
+    .history-item { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">Laughter <em>Enterprise</em></span>
+      <span class="brand-sub">Invoice Studio</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-page="create"><i class="ti ti-file-plus"></i> <span>New</span></button>
+      <button class="nav-btn" data-page="history"><i class="ti ti-history"></i> <span>History</span> <span class="count" id="hist-count"></span></button>
+      <button class="nav-btn" data-page="settings"><i class="ti ti-settings"></i> <span>Settings</span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page active" id="page-create">
+    <h1 class="page-title" id="page-title">New invoice</h1>
+    <p class="page-sub" id="page-sub">Fill in the details. Preview updates live as you type.</p>
+
+    <div class="edit-banner" id="edit-banner" style="display: none;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="ti ti-edit"></i>
+        <div class="edit-banner-text">
+          <strong>Editing saved invoice</strong> — Invoice number stays locked (GST rule). A revision note will be added.
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="cancel-edit"><i class="ti ti-x"></i> Cancel edit</button>
+    </div>
+
+    <div class="create-grid">
+      <div>
+        <div class="panel">
+          <div class="seller-card">
+            <strong>Laughter Enterprise</strong>
+            <div class="seller-meta">
+              GSTIN 27BIOPM8405N1ZJ · PAN BIOPM8405N<br>
+              ICICI Bank · A/C 003601554950 · IFSC ICIC0000036<br>
+              rjpranitofficial@gmail.com
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-label">Invoice</div>
+            <div class="field-row">
+              <div>
+                <label>Invoice number <span id="num-lock" style="display:none; color: var(--warn);"><i class="ti ti-lock" style="font-size:11px;"></i></span></label>
+                <input type="text" id="invoice-num" />
+                <div class="field-hint" id="num-hint">Auto-generated. Sequential per FY.</div>
+              </div>
+              <div>
+                <label>Date</label>
+                <input type="date" id="invoice-date" />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-label">Client</div>
+            <div class="field">
+              <label>Client / Company name</label>
+              <input type="text" id="client-name" placeholder="e.g. Zomato Limited" />
+            </div>
+            <div class="field">
+              <label>Address <span style="color: var(--ink-mute); font-weight: 400;">(optional)</span></label>
+              <textarea id="client-address" rows="2" placeholder="Street, city, postal code"></textarea>
+            </div>
+            <div class="field-row">
+              <div>
+                <label>State</label>
+                <input type="text" id="client-state" placeholder="e.g. Karnataka" />
+              </div>
+              <div>
+                <label>GSTIN <span style="color: var(--ink-mute); font-weight: 400;">(optional)</span></label>
+                <input type="text" id="client-gstin" />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-label">Service</div>
+            <div class="field-row">
+              <div>
+                <label>Service type</label>
+                <select id="service-type">
+                  <option value="Deliverables">Deliverables</option>
+                  <option value="Reel Collab">Reel Collab</option>
+                  <option value="Reel Non Collab">Reel Non Collab</option>
+                  <option value="Performance Fee">Performance Fee</option>
+                </select>
+              </div>
+              <div>
+                <label>Tax type</label>
+                <select id="gst-type">
+                  <option value="intra">CGST + SGST (Maharashtra)</option>
+                  <option value="inter">IGST (Other state)</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row">
+              <div>
+                <label>Cost (₹, before GST)</label>
+                <input type="number" id="cost" step="0.01" min="0" placeholder="0.00" />
+              </div>
+              <div>
+                <label>Description <span style="color: var(--ink-mute); font-weight: 400;">(optional)</span></label>
+                <input type="text" id="description" placeholder="e.g. 1 Reel + 3 Stories" />
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section" id="revision-section" style="display: none;">
+            <div class="section-label">Revision reason</div>
+            <div class="field">
+              <label>Why is this being revised? <span style="color: var(--ink-mute); font-weight: 400;">(required when editing)</span></label>
+              <textarea id="revision-note" rows="2" placeholder="e.g. Corrected client GSTIN / Updated deliverables count"></textarea>
+              <div class="field-hint">Appears on the invoice for audit trail.</div>
+            </div>
+          </div>
+
+          <div class="totals">
+            <div class="totals-row"><span>Subtotal</span><span id="subtotal">₹0.00</span></div>
+            <div class="totals-row" id="cgst-row"><span>CGST @ 9%</span><span id="cgst">₹0.00</span></div>
+            <div class="totals-row" id="sgst-row"><span>SGST @ 9%</span><span id="sgst">₹0.00</span></div>
+            <div class="totals-row" id="igst-row" style="display:none;"><span>IGST @ 18%</span><span id="igst">₹0.00</span></div>
+            <div class="totals-row grand"><span class="label">Total due</span><span id="grand-total">₹0.00</span></div>
+          </div>
+
+          <div class="actions-row">
+            <button class="btn btn-primary" id="generate-btn"><i class="ti ti-check"></i> <span id="gen-btn-label">Generate &amp; save</span></button>
+            <button class="btn btn-ghost" id="clear-btn"><i class="ti ti-refresh"></i> Clear</button>
+          </div>
+          <div class="status" id="status"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="invoice-paper" id="invoice-paper"></div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="download-pdf"><i class="ti ti-file-download"></i> Download PDF</button>
+          <button class="btn btn-secondary" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-history">
+    <h1 class="page-title">Invoice history</h1>
+    <p class="page-sub">All saved invoices. Sequentially numbered per GST rules — invoice numbers cannot be deleted or skipped.</p>
+
+    <div class="history-controls">
+      <div class="search-box">
+        <i class="ti ti-search"></i>
+        <input type="text" id="history-search" placeholder="Search by number, client, or service…" />
+      </div>
+      <select id="filter-fy" style="width: auto; max-width: 200px;">
+        <option value="">All financial years</option>
+      </select>
+    </div>
+
+    <div class="history-grid" id="history-list"></div>
+  </div>
+
+  <div class="page" id="page-settings">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-sub">Numbering preferences and data management.</p>
+
+    <div class="panel" style="max-width: 640px;">
+      <div class="panel-section">
+        <div class="section-label">Invoice numbering</div>
+        <div class="field-row">
+          <div>
+            <label>Prefix</label>
+            <input type="text" id="num-prefix" value="LE" />
+          </div>
+          <div>
+            <label>Next sequence number</label>
+            <input type="number" id="num-seq" min="1" value="1" />
+          </div>
+        </div>
+        <div class="field-hint">
+          Format: <strong>PREFIX/FY/###</strong> — e.g. LE/2026-27/001<br>
+          The FY (April–March) resets automatically. Once an invoice is saved with a number, that number is locked forever (GST compliance).
+        </div>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="settings-save"><i class="ti ti-check"></i> Save settings</button>
+        </div>
+        <div class="status" id="settings-status"></div>
+      </div>
+
+      <div class="panel-section" style="border-top: 1px solid var(--line-soft); padding-top: 24px;">
+        <div class="section-label">Backup &amp; restore</div>
+        <p style="font-size: 13px; color: var(--ink-soft); margin-bottom: 14px;">
+          Invoices are saved in this browser's local storage. Export regularly so you don't lose data if you switch devices or clear browser data.
+        </p>
+        <div class="actions-row" style="margin-top: 0;">
+          <button class="btn btn-secondary" id="export-data"><i class="ti ti-download"></i> Export backup (JSON)</button>
+          <button class="btn btn-secondary" id="import-data"><i class="ti ti-upload"></i> Import backup</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display: none;" />
+      </div>
+
+      <div class="panel-section" style="border-top: 1px solid var(--line-soft); padding-top: 24px;">
+        <div class="section-label" style="color: var(--accent);">Danger zone</div>
+        <p style="font-size: 13px; color: var(--ink-soft); margin-bottom: 14px;">
+          Deleting invoices breaks GST sequence compliance. Only use this for testing data.
+        </p>
+        <div class="actions-row" style="margin-top: 0;">
+          <button class="btn btn-danger" id="reset-all"><i class="ti ti-trash"></i> Delete all invoices</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3 class="modal-title">Delete invoice <span id="delete-num"></span>?</h3>
+    <div class="modal-body">
+      <p>Under GST rules, invoice numbers must be sequential and unbroken. Deleting <strong id="delete-num-2"></strong> will leave a gap in your sequence.</p>
+      <p style="margin-top: 10px;">For real corrections, <strong>edit the invoice instead</strong> — it preserves the number and adds a revision note. Only delete if this was a test or duplicate entry.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="delete-cancel">Cancel</button>
+      <button class="btn btn-danger" id="delete-confirm">Yes, delete anyway</button>
+    </div>
+  </div>
+</div>
+
+<div class="pdf-export-wrapper" id="pdf-export-wrapper"></div>
+
+<script>
+const SIG_URI = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABNAIYDASIAAhEBAxEB/8QAGwABAAMBAQEBAAAAAAAAAAAAAAMEBQYBAgj/xAA1EAABBAIABAQDBgUFAAAAAAABAAIDBAURBhIhMRNBUXEUIjJCYYGRobEVFjNS8CMkwdHx/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AP18iIgIiICIiAiIgIihnt168rGSyta93UA+aCZVMrkIcdWMsnzP7MYO7j7LnOIsvLwzk23bMrpqVvTImb7O1snr0WjisZLanGTyjhJK7rHH9lg+4H2QaOHsWbVXxrMTYi47a0E9tDXdXEGtdNdOiICIiAiIgIiICI4hrS5x01o2SfILBs5OzkpjUxILWA6ksensQg1L2Rp0m808v4M+YqPH5ahfcW15HBw8njlUFPA0omAztFiTuXvAJUOdwtd2PmnpRtgtRNLo3sGjtBtoqWDtOuYyKZ31a5Xe46K6g9XN5Php9/iNmQdbeId7MWhrfRdGegJ8gNrmJeIr/Ob0NVjsY12i8g82vN29610KCxZjw/EkT8bMxxNYkAOBBBHTf6Kpi8u/GVrWMvlzrFVpETtf1Omx+4CnydEutVc5iWgSOIdK1o/qN10B177WnlKuOeIrl+GMuYQA5wGwUEODe+viJLlskBxMxA6kAgHStYfJ1crTFun4nhEkDnZynoSO34L6fE6dzdEGq6MAs8j/AJ0UtWvBVhENeJscY7NaNBBKiIgIiIC9XizuI7z6GNLoRzWJTyRAf3d/2QUclO/LZA4ysf8Abxnc7x5n0/La2aleGpA2KJoa0DSrYHHsx1FsTer3dXu8yVNlKrruPmqslMTpG6Dx3afVBZVTNTtq4i3YcekcRcqHCuQfYgfTtEi5XPLID3I66P5BR8VyG0+vhour53Ayj0j6g/rpBb4WjdFhYg4aLiXfmdrSkeyNhfI9rWgbOyql+1DicUZ5PoiYGgep10XJcNwWuL68mTysjoYnP/0YW/YH4/ig2cpdbneHrowdo/EMBaDy66h3Xv7FRcAujvcF1607fn8Mxzt9CSf+FznDc8vDnFlzE2mu+H21zZR2IIcf+l1Zt47EwyWKkO57buZsIA5nHWt69OiBUjPDtCd9m0X1WbdGwt6jZ7dOpWhjbDcpjYrEkPIJOvJ6aJCzKOKsX523su/n+0yA/Sz07/cuga0NaGtAAHYBAaA0ADsEREBERAREQFyvHzr9abF36lf4mOCyXTR7A+XkI/ddUhAI0RsIPivJ40DJQNcw3pfa9aBsDsFzkufvVbc9efE2JCHHwTFGXNcN9NlBW48k/grGcRVuk8fyuZ/fv/xVcRemPD8vFgh8a3bZzsjJ6MB66/RatHFWshP8dnOVztEMgb1a0H36+irsH8v5swPG8Zdd8hPaN58vbQKDA4uzeUgdjYMtC01bW3FwAGtFuhoe634ql/GyvtYNwkq2Tz+GWjp7b9lZ40w0+YpQGk5gnh3yc30kHW/2VHH3L1OhXwdItsX2N5ZpWnbIvxHn1HdB8PkNB8hnjbbytrWmkAcuu3qOx/Ra2Cw4ru+MuHxbT+p2OjfYdvJT4XERUA6R7jNYkO3yOHXf+ErTQEREBERAREQEREBERAQgE7IG/ZEQFUy9GDI4+WtYPKxw+vzb94VtVcpQgyVX4awCYydkDzQcTgs9k826TBU3iN1VxbLY1vbdnlGu46Ars8Rja+NriKFpLtfM9x25x+8rE4oowYqrDlKA8GauRHofaDiB1/JdFj5zaoQWXNDTI3mIHkgmREQEREBERAREQEREH//Z";
+
+const SELLER = {
+  name: 'Laughter Enterprise',
+  holder: 'Pranit Satyawan More',
+  account: '003601554950',
+  ifsc: 'ICIC0000036',
+  branch: 'ICICI Bank, Prabhadevi branch',
+  pan: 'BIOPM8405N',
+  gstin: '27BIOPM8405N1ZJ',
+  email: 'rjpranitofficial@gmail.com'
+};
+
+const STORAGE_KEYS = { settings: 'le_settings_v2', invoices: 'le_invoices_v2' };
+let settings = { prefix: 'LE', seq: 1, fyYear: getFY() };
+let invoices = {};
+let editMode = null;
+let pendingDeleteNum = null;
+
+function getFY() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const start = d.getMonth() >= 3 ? y : y - 1;
+  return `${start}-${String(start + 1).slice(2)}`;
+}
+
+const fmt = (n) => '₹' + Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+function formatDate(d) {
+  if (!d) return '';
+  const parts = d.split('-');
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : d;
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function loadAll() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEYS.settings);
+    if (s) settings = { ...settings, ...JSON.parse(s) };
+  } catch (e) {}
+  try {
+    const i = localStorage.getItem(STORAGE_KEYS.invoices);
+    if (i) invoices = JSON.parse(i);
+  } catch (e) {}
+  const currentFY = getFY();
+  if (settings.fyYear !== currentFY) {
+    const seqs = Object.values(invoices)
+      .filter(inv => inv.invoiceNum && inv.invoiceNum.includes('/' + currentFY + '/'))
+      .map(inv => parseInt(inv.invoiceNum.split('/').pop(), 10))
+      .filter(n => !isNaN(n));
+    settings.fyYear = currentFY;
+    settings.seq = seqs.length ? Math.max(...seqs) + 1 : 1;
+    saveSettings();
+  }
+}
+function saveSettings() {
+  try { localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings)); } catch (e) {}
+}
+function saveInvoices() {
+  try { localStorage.setItem(STORAGE_KEYS.invoices, JSON.stringify(invoices)); } catch (e) {}
+}
+
+function nextInvoiceNumber() {
+  return `${settings.prefix}/${settings.fyYear}/${String(settings.seq).padStart(3, '0')}`;
+}
+
+function calcTotals() {
+  const cost = parseFloat(document.getElementById('cost').value) || 0;
+  const gstType = document.getElementById('gst-type').value;
+  const gst = cost * 0.18;
+  let cgst = 0, sgst = 0, igst = 0;
+  if (gstType === 'intra') { cgst = gst / 2; sgst = gst / 2; }
+  else { igst = gst; }
+  return { subtotal: cost, cgst, sgst, igst, total: cost + gst, gstType };
+}
+
+function updateTotals() {
+  const t = calcTotals();
+  document.getElementById('subtotal').textContent = fmt(t.subtotal);
+  document.getElementById('cgst').textContent = fmt(t.cgst);
+  document.getElementById('sgst').textContent = fmt(t.sgst);
+  document.getElementById('igst').textContent = fmt(t.igst);
+  document.getElementById('grand-total').textContent = fmt(t.total);
+  const intra = t.gstType === 'intra';
+  document.getElementById('cgst-row').style.display = intra ? 'flex' : 'none';
+  document.getElementById('sgst-row').style.display = intra ? 'flex' : 'none';
+  document.getElementById('igst-row').style.display = intra ? 'none' : 'flex';
+  updatePreview();
+}
+
+function gatherInvoice() {
+  const t = calcTotals();
+  const existing = editMode ? invoices[editMode] : null;
+  return {
+    invoiceNum: document.getElementById('invoice-num').value,
+    invoiceDate: document.getElementById('invoice-date').value,
+    clientName: document.getElementById('client-name').value,
+    clientAddress: document.getElementById('client-address').value,
+    clientState: document.getElementById('client-state').value,
+    clientGstin: document.getElementById('client-gstin').value,
+    serviceType: document.getElementById('service-type').value,
+    cost: parseFloat(document.getElementById('cost').value) || 0,
+    description: document.getElementById('description').value,
+    ...t,
+    createdAt: existing ? existing.createdAt : Date.now(),
+    savedAt: Date.now(),
+    version: existing ? (existing.version || 1) + 1 : 1,
+    revisionHistory: existing ? (existing.revisionHistory || []) : [],
+    currentRevisionNote: document.getElementById('revision-note').value
+  };
+}
+
+function buildInvoiceHtml(inv) {
+  const isIntra = inv.gstType === 'intra';
+  const lineDesc = inv.description
+    ? `${escapeHtml(inv.serviceType)} <span style="color: #8b8576;">— ${escapeHtml(inv.description)}</span>`
+    : escapeHtml(inv.serviceType);
+  const isRevised = inv.version && inv.version > 1;
+  const revisedBadge = isRevised ? `<div class="inv-revised-badge">Revised · v${inv.version}</div>` : '';
+  const revisionNote = isRevised && inv.currentRevisionNote
+    ? `<div class="inv-revision-note"><strong>Revision note (v${inv.version}):</strong> ${escapeHtml(inv.currentRevisionNote)}<span style="color: #8b8576; margin-left: 6px;">· Updated ${formatTimestamp(inv.savedAt)}</span></div>`
+    : '';
+
+  return `
+    ${revisedBadge}
+    <div class="inv-header">
+      <div>
+        <div class="inv-brand">Laughter <em>Enterprise</em></div>
+        <div class="inv-meta-left">
+          <strong>GSTIN</strong> ${SELLER.gstin}<br>
+          <strong>PAN</strong> ${SELLER.pan}<br>
+          ${SELLER.email}
+        </div>
+      </div>
+      <div>
+        <div class="inv-title">Tax Invoice</div>
+        <div class="inv-meta-right">
+          <strong>No.</strong> ${escapeHtml(inv.invoiceNum) || '—'}<br>
+          <strong>Date</strong> ${escapeHtml(formatDate(inv.invoiceDate)) || '—'}
+        </div>
+      </div>
+    </div>
+    <div class="inv-billto">
+      <div class="inv-billto-label">Billed to</div>
+      <div class="inv-billto-name">${escapeHtml(inv.clientName) || '—'}</div>
+      <div class="inv-billto-meta">
+        ${inv.clientAddress ? escapeHtml(inv.clientAddress).replace(/\n/g, '<br>') + '<br>' : ''}
+        ${inv.clientState ? 'State: ' + escapeHtml(inv.clientState) : ''}
+        ${inv.clientGstin ? ' · GSTIN: ' + escapeHtml(inv.clientGstin) : ''}
+      </div>
+    </div>
+    <table class="inv-table">
+      <thead><tr><th style="width: 30px;">#</th><th>Description</th><th class="num" style="width: 140px;">Amount</th></tr></thead>
+      <tbody><tr><td>1</td><td>${lineDesc}</td><td class="num">${fmt(inv.cost)}</td></tr></tbody>
+    </table>
+    <div class="inv-summary">
+      <table>
+        <tr><td>Subtotal</td><td class="num">${fmt(inv.subtotal)}</td></tr>
+        ${isIntra
+          ? `<tr><td>CGST @ 9%</td><td class="num">${fmt(inv.cgst)}</td></tr><tr><td>SGST @ 9%</td><td class="num">${fmt(inv.sgst)}</td></tr>`
+          : `<tr><td>IGST @ 18%</td><td class="num">${fmt(inv.igst)}</td></tr>`}
+        <tr class="grand"><td>Total</td><td class="num">${fmt(inv.total)}</td></tr>
+      </table>
+    </div>
+    <div class="inv-payment">
+      <div class="inv-payment-title">Payment details</div>
+      <div>
+        <strong>Account holder:</strong> ${SELLER.holder}<br>
+        <strong>Account number:</strong> ${SELLER.account}<br>
+        <strong>IFSC:</strong> ${SELLER.ifsc} &nbsp;·&nbsp; <strong>Branch:</strong> ${SELLER.branch}
+      </div>
+    </div>
+    <div class="inv-footer">
+      <div class="inv-thanks">Thank you for your business.</div>
+      <div class="inv-signature">
+        <img src="${SIG_URI}" alt="Signature" />
+        <div class="sig-name">
+          <strong>${SELLER.holder}</strong>
+          <span>For ${SELLER.name}</span>
+        </div>
+      </div>
+    </div>
+    ${revisionNote}
+  `;
+}
+
+function updatePreview() {
+  // Show preview with current form data, but if editing, version should reflect intended save version
+  const inv = gatherInvoice();
+  // For preview, if we're editing, show v as it would be after save (already +1 in gatherInvoice)
+  // If just looking and no edits, fine
+  document.getElementById('invoice-paper').innerHTML = buildInvoiceHtml(inv);
+}
+
+async function generatePDF(inv) {
+  const wrapper = document.getElementById('pdf-export-wrapper');
+  wrapper.innerHTML = `<div class="invoice-paper" style="border: none; box-shadow: none; padding: 18mm 16mm; min-height: auto;">${buildInvoiceHtml(inv)}</div>`;
+  const filename = `Invoice_${inv.invoiceNum.replace(/[^a-zA-Z0-9-]/g, '_')}_${(inv.clientName || 'client').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 20)}.pdf`;
+  try {
+    await html2pdf().set({
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(wrapper.firstElementChild).save();
+    return filename;
+  } finally {
+    wrapper.innerHTML = '';
+  }
+}
+
+async function downloadPDF() {
+  const inv = gatherInvoice();
+  if (!inv.clientName) { showStatus('Add a client name before downloading.', 'error'); return; }
+  if (!inv.cost) { showStatus('Add a cost before downloading.', 'error'); return; }
+  showStatus('Generating PDF…', 'warn');
+  try {
+    const filename = await generatePDF(inv);
+    showStatus(`✓ PDF downloaded: ${filename}`, 'success');
+  } catch (err) {
+    showStatus('PDF generation failed: ' + err.message, 'error');
+  }
+}
+
+function showStatus(msg, type = 'success') {
+  const s = document.getElementById('status');
+  s.className = 'status' + (type === 'error' ? ' error' : type === 'warn' ? ' warn' : '');
+  s.textContent = msg;
+}
+
+function generateInvoice() {
+  const inv = gatherInvoice();
+  if (!inv.clientName) { showStatus('Please add a client name.', 'error'); return; }
+  if (!inv.cost || inv.cost <= 0) { showStatus('Please enter a cost greater than zero.', 'error'); return; }
+  if (!inv.invoiceNum) { showStatus('Invoice number missing.', 'error'); return; }
+
+  if (editMode) {
+    if (!inv.currentRevisionNote || !inv.currentRevisionNote.trim()) {
+      showStatus('Please add a revision reason — required for audit trail.', 'error');
+      return;
+    }
+    const existing = invoices[editMode];
+    const history = existing.revisionHistory || [];
+    const snapshot = { ...existing };
+    delete snapshot.revisionHistory;
+    history.push({
+      version: existing.version || 1,
+      savedAt: existing.savedAt,
+      revisionNote: existing.currentRevisionNote || '(original)',
+      snapshot: snapshot
+    });
+    inv.revisionHistory = history;
+    invoices[editMode] = inv;
+    saveInvoices();
+    showStatus(`✓ Invoice ${inv.invoiceNum} updated as v${inv.version}. Previous version preserved in audit log.`, 'success');
+    exitEditMode();
+  } else {
+    if (invoices[inv.invoiceNum]) {
+      showStatus(`Invoice number ${inv.invoiceNum} already exists — cannot duplicate.`, 'error');
+      return;
+    }
+    invoices[inv.invoiceNum] = inv;
+    saveInvoices();
+    settings.seq += 1;
+    saveSettings();
+    document.getElementById('num-seq').value = settings.seq;
+    showStatus(`✓ Saved as ${inv.invoiceNum}. Next number: ${nextInvoiceNumber()}.`, 'success');
+    document.getElementById('invoice-num').value = nextInvoiceNumber();
+  }
+  updateHistCount();
+}
+
+function clearForm() {
+  ['client-name','client-address','client-state','client-gstin','description','cost','revision-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('service-type').value = 'Deliverables';
+  document.getElementById('gst-type').value = 'intra';
+  document.getElementById('invoice-date').valueAsDate = new Date();
+  if (!editMode) {
+    document.getElementById('invoice-num').value = nextInvoiceNumber();
+  }
+  showStatus('', 'success');
+  updateTotals();
+}
+
+function enterEditMode(num) {
+  const inv = invoices[num];
+  if (!inv) return;
+  editMode = num;
+  document.getElementById('invoice-num').value = inv.invoiceNum;
+  document.getElementById('invoice-num').readOnly = true;
+  document.getElementById('invoice-date').value = inv.invoiceDate;
+  document.getElementById('client-name').value = inv.clientName;
+  document.getElementById('client-address').value = inv.clientAddress || '';
+  document.getElementById('client-state').value = inv.clientState || '';
+  document.getElementById('client-gstin').value = inv.clientGstin || '';
+  document.getElementById('service-type').value = inv.serviceType;
+  document.getElementById('gst-type').value = inv.gstType;
+  document.getElementById('cost').value = inv.cost;
+  document.getElementById('description').value = inv.description || '';
+  document.getElementById('revision-note').value = '';
+  document.getElementById('page-title').textContent = `Editing ${inv.invoiceNum}`;
+  document.getElementById('page-sub').textContent = `Current version: v${inv.version || 1} · Last saved ${formatTimestamp(inv.savedAt)}`;
+  document.getElementById('edit-banner').style.display = 'flex';
+  document.getElementById('revision-section').style.display = 'block';
+  document.getElementById('num-lock').style.display = 'inline';
+  document.getElementById('num-hint').textContent = 'Locked — GST rule: invoice numbers cannot change.';
+  document.getElementById('gen-btn-label').textContent = 'Save changes';
+  updateTotals();
+  switchPage('create');
+}
+
+function exitEditMode() {
+  editMode = null;
+  document.getElementById('invoice-num').readOnly = false;
+  document.getElementById('page-title').textContent = 'New invoice';
+  document.getElementById('page-sub').textContent = 'Fill in the details. Preview updates live as you type.';
+  document.getElementById('edit-banner').style.display = 'none';
+  document.getElementById('revision-section').style.display = 'none';
+  document.getElementById('num-lock').style.display = 'none';
+  document.getElementById('num-hint').textContent = 'Auto-generated. Sequential per FY.';
+  document.getElementById('gen-btn-label').textContent = 'Generate & save';
+  clearForm();
+}
+
+function buildFYOptions() {
+  const fySet = new Set();
+  Object.values(invoices).forEach(inv => {
+    if (inv.invoiceNum && inv.invoiceNum.includes('/')) {
+      const parts = inv.invoiceNum.split('/');
+      if (parts.length === 3) fySet.add(parts[1]);
+    }
+  });
+  const select = document.getElementById('filter-fy');
+  const current = select.value;
+  select.innerHTML = '<option value="">All financial years</option>' +
+    Array.from(fySet).sort().reverse().map(fy => `<option value="${fy}">FY ${fy}</option>`).join('');
+  select.value = current;
+}
+
+function renderHistory() {
+  buildFYOptions();
+  const list = document.getElementById('history-list');
+  const searchTerm = document.getElementById('history-search').value.toLowerCase().trim();
+  const fyFilter = document.getElementById('filter-fy').value;
+  let arr = Object.values(invoices);
+  if (searchTerm) {
+    arr = arr.filter(inv =>
+      (inv.invoiceNum || '').toLowerCase().includes(searchTerm) ||
+      (inv.clientName || '').toLowerCase().includes(searchTerm) ||
+      (inv.serviceType || '').toLowerCase().includes(searchTerm)
+    );
+  }
+  if (fyFilter) {
+    arr = arr.filter(inv => (inv.invoiceNum || '').includes('/' + fyFilter + '/'));
+  }
+  arr.sort((a, b) => {
+    const aNum = (a.invoiceNum || '').split('/').pop();
+    const bNum = (b.invoiceNum || '').split('/').pop();
+    const aFY = (a.invoiceNum || '').split('/')[1] || '';
+    const bFY = (b.invoiceNum || '').split('/')[1] || '';
+    if (aFY !== bFY) return bFY.localeCompare(aFY);
+    return parseInt(bNum, 10) - parseInt(aNum, 10);
+  });
+
+  if (!arr.length) {
+    list.innerHTML = '<div class="empty"><i class="ti ti-file-off"></i>' + (searchTerm || fyFilter ? 'No matches.' : 'No invoices yet.') + '</div>';
+    return;
+  }
+
+  list.innerHTML = arr.map(inv => {
+    const isRevised = inv.version && inv.version > 1;
+    return `
+      <div class="history-item${isRevised ? ' revised' : ''}">
+        <div style="flex: 1; min-width: 0;">
+          <div class="h-num">
+            ${escapeHtml(inv.invoiceNum)}
+            ${isRevised ? `<span class="badge warn" style="font-family: var(--body); font-size: 10px;">v${inv.version}</span>` : ''}
+          </div>
+          <div class="h-client">${escapeHtml(inv.clientName)}</div>
+          <div class="h-meta">
+            <span>${escapeHtml(formatDate(inv.invoiceDate))}</span>
+            <span class="badge">${escapeHtml(inv.serviceType)}</span>
+            <span class="badge">${inv.gstType === 'intra' ? 'CGST+SGST' : 'IGST'}</span>
+          </div>
+        </div>
+        <div class="h-amount">${fmt(inv.total)}</div>
+        <div class="h-actions">
+          <button class="btn-icon" data-edit="${escapeHtml(inv.invoiceNum)}" title="Edit / Revise"><i class="ti ti-edit"></i></button>
+          <button class="btn-icon" data-pdf="${escapeHtml(inv.invoiceNum)}" title="Download PDF"><i class="ti ti-file-download"></i></button>
+          <button class="btn-icon danger" data-del="${escapeHtml(inv.invoiceNum)}" title="Delete"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => enterEditMode(b.dataset.edit));
+  list.querySelectorAll('[data-pdf]').forEach(b => b.onclick = () => quickDownloadPDF(b.dataset.pdf));
+  list.querySelectorAll('[data-del]').forEach(b => b.onclick = () => askDelete(b.dataset.del));
+}
+
+async function quickDownloadPDF(num) {
+  const inv = invoices[num];
+  if (!inv) return;
+  try {
+    await generatePDF(inv);
+  } catch (err) {
+    alert('PDF generation failed: ' + err.message);
+  }
+}
+
+function askDelete(num) {
+  pendingDeleteNum = num;
+  document.getElementById('delete-num').textContent = num;
+  document.getElementById('delete-num-2').textContent = num;
+  document.getElementById('delete-modal').classList.add('active');
+}
+function confirmDelete() {
+  if (!pendingDeleteNum) return;
+  delete invoices[pendingDeleteNum];
+  saveInvoices();
+  renderHistory();
+  updateHistCount();
+  closeDeleteModal();
+}
+function closeDeleteModal() {
+  pendingDeleteNum = null;
+  document.getElementById('delete-modal').classList.remove('active');
+}
+
+function updateHistCount() {
+  const n = Object.keys(invoices).length;
+  document.getElementById('hist-count').textContent = n ? `(${n})` : '';
+}
+
+function loadSettingsUI() {
+  document.getElementById('num-prefix').value = settings.prefix;
+  document.getElementById('num-seq').value = settings.seq;
+}
+function saveSettingsFromUI() {
+  settings.prefix = document.getElementById('num-prefix').value || 'LE';
+  settings.seq = parseInt(document.getElementById('num-seq').value, 10) || 1;
+  saveSettings();
+  if (!editMode) document.getElementById('invoice-num').value = nextInvoiceNumber();
+  const s = document.getElementById('settings-status');
+  s.textContent = '✓ Saved.';
+  setTimeout(() => s.textContent = '', 2000);
+}
+function exportData() {
+  const data = { settings, invoices, exportedAt: new Date().toISOString(), version: 2 };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `laughter-enterprise-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.invoices) { invoices = { ...invoices, ...data.invoices }; saveInvoices(); }
+      if (data.settings) { settings = { ...settings, ...data.settings }; saveSettings(); }
+      loadSettingsUI();
+      if (!editMode) document.getElementById('invoice-num').value = nextInvoiceNumber();
+      renderHistory();
+      updateHistCount();
+      const s = document.getElementById('settings-status');
+      s.textContent = '✓ Backup imported.';
+      setTimeout(() => s.textContent = '', 2500);
+    } catch (err) {
+      alert('Failed to import: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+function resetAll() {
+  if (!confirm('Delete ALL invoices? This breaks GST sequence compliance. Only proceed if these are test entries.')) return;
+  if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+  invoices = {};
+  saveInvoices();
+  settings.seq = 1;
+  saveSettings();
+  document.getElementById('num-seq').value = 1;
+  if (!editMode) document.getElementById('invoice-num').value = nextInvoiceNumber();
+  renderHistory();
+  updateHistCount();
+  const s = document.getElementById('settings-status');
+  s.textContent = '✓ All invoices deleted.';
+  setTimeout(() => s.textContent = '', 2000);
+}
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+  if (name === 'history') renderHistory();
+  if (name === 'settings') loadSettingsUI();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function init() {
+  loadAll();
+  document.querySelectorAll('.nav-btn').forEach(b => b.onclick = () => {
+    if (editMode && b.dataset.page !== 'create') {
+      if (!confirm('Discard your edits and leave this invoice?')) return;
+      exitEditMode();
+    }
+    switchPage(b.dataset.page);
+  });
+
+  ['cost','gst-type','client-name','client-address','client-state','client-gstin','service-type','description','invoice-num','invoice-date','revision-note']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', updateTotals);
+      el.addEventListener('change', updateTotals);
+    });
+
+  document.getElementById('generate-btn').onclick = generateInvoice;
+  document.getElementById('clear-btn').onclick = clearForm;
+  document.getElementById('cancel-edit').onclick = () => { if (confirm('Discard your changes?')) exitEditMode(); };
+  document.getElementById('download-pdf').onclick = downloadPDF;
+  document.getElementById('settings-save').onclick = saveSettingsFromUI;
+  document.getElementById('reset-all').onclick = resetAll;
+  document.getElementById('export-data').onclick = exportData;
+  document.getElementById('import-data').onclick = () => document.getElementById('import-file').click();
+  document.getElementById('import-file').onchange = (e) => { if (e.target.files[0]) importData(e.target.files[0]); };
+  document.getElementById('history-search').oninput = renderHistory;
+  document.getElementById('filter-fy').onchange = renderHistory;
+  document.getElementById('delete-cancel').onclick = closeDeleteModal;
+  document.getElementById('delete-confirm').onclick = confirmDelete;
+  document.getElementById('delete-modal').onclick = (e) => { if (e.target.id === 'delete-modal') closeDeleteModal(); };
+
+  document.getElementById('invoice-date').valueAsDate = new Date();
+  document.getElementById('invoice-num').value = nextInvoiceNumber();
+  updateTotals();
+  updateHistCount();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
